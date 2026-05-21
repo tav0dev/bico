@@ -1,98 +1,292 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { AISparkle, BicoAvatar, BicoButton, BicoCard, BicoTopBar, SectionTitle, softTint } from '@/components/bico/ui';
+import { useBico } from '@/context/bico-context';
 
-export default function HomeScreen() {
+type QuickAction = {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  tint: string;
+  ai?: boolean;
+  route?: string;
+};
+
+export default function DashboardScreen() {
+  const router = useRouter();
+  const { tokens } = useBico();
+  const actions: QuickAction[] = [
+    { icon: 'cash-outline', label: 'Novo orcamento', tint: tokens.green, route: '/services' },
+    { icon: 'people-outline', label: 'Adicionar cliente', tint: tokens.purple, route: '/clients' },
+    { icon: 'image-outline', label: 'Criar post', tint: tokens.orange, ai: true, route: '/create-post' },
+    { icon: 'calendar-outline', label: 'Bloquear horario', tint: tokens.textMuted, route: '/agenda' },
+  ];
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <SafeAreaView edges={['top']} style={[styles.safeArea, { backgroundColor: tokens.bg }]}>
+      <BicoTopBar
+        title="Ola, Marina"
+        subtitle="Quarta, 6 de maio"
+        leading={<BicoAvatar name="Marina Silva" size={40} />}
+        trailing={
+          <View>
+            <Ionicons name="notifications-outline" size={22} color={tokens.text} style={styles.notificationIcon} />
+            <View style={[styles.notificationDot, { backgroundColor: tokens.orange, borderColor: tokens.bg }]} />
+          </View>
+        }
+      />
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      <ScrollView contentContainerStyle={styles.content}>
+        <BicoCard>
+          <View style={styles.todayHeader}>
+            <View>
+              <Text style={[styles.eyebrow, { color: tokens.textMuted }]}>HOJE</Text>
+              <Text style={[styles.todayTitle, { color: tokens.text }]}>3 atendimentos</Text>
+            </View>
+            <View style={styles.forecast}>
+              <Text style={[styles.forecastLabel, { color: tokens.textMuted }]}>previsao</Text>
+              <Text style={[styles.forecastValue, { color: tokens.green }]}>R$ 380</Text>
+            </View>
+          </View>
+          <View style={[styles.cardDivider, { backgroundColor: tokens.borderSoft }]} />
+          <View style={styles.statsRow}>
+            <Stat label="Concluidos" value="1" color={tokens.green} />
+            <Stat label="Em andamento" value="1" color={tokens.orange} />
+            <Stat label="Pendente" value="1" color={tokens.textMuted} />
+          </View>
+        </BicoCard>
+
+        <View style={styles.sectionHeader}>
+          <SectionTitle>Proximo</SectionTitle>
+          <Pressable onPress={() => router.push('/agenda')}>
+            <Text style={[styles.linkText, { color: tokens.green }]}>Ver agenda</Text>
+          </Pressable>
+        </View>
+
+        <BicoCard>
+          <View style={styles.appointmentRow}>
+            <View style={[styles.timeBox, { backgroundColor: tokens.greenSoft }]}>
+              <Text style={[styles.timeText, { color: tokens.green }]}>14:00</Text>
+              <Text style={[styles.durationText, { color: tokens.green }]}>1h30</Text>
+            </View>
+            <View style={styles.appointmentBody}>
+              <Text style={[styles.appointmentTitle, { color: tokens.text }]}>Treino funcional - Carla M.</Text>
+              <View style={styles.inlineRow}>
+                <Ionicons name="location-outline" size={13} color={tokens.textMuted} />
+                <Text style={[styles.appointmentLocation, { color: tokens.textMuted }]}>Studio Vila Madalena</Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={tokens.textMuted} />
+          </View>
+        </BicoCard>
+
+        <View style={[styles.aiCard, { borderColor: tokens.orangeSoft, backgroundColor: tokens.orangeSoft }]}>
+          <View style={styles.inlineRow}>
+            <AISparkle size={14} />
+            <Text style={[styles.aiLabel, { color: tokens.orange }]}>TUCO SUGERE</Text>
+          </View>
+          <Text style={[styles.aiText, { color: tokens.text }]}>
+            Joao Pedro nao confirmou o treino de amanha. Quer que eu envie um lembrete?
+          </Text>
+          <View style={styles.aiActions}>
+            <BicoButton label="Enviar lembrete" variant="ai" size="sm" />
+            <BicoButton label="Agora nao" variant="ghost" size="sm" />
+          </View>
+        </View>
+
+        <SectionTitle>Atalhos</SectionTitle>
+        <View style={styles.quickGrid}>
+          {actions.map((action) => (
+            <Pressable
+              key={action.label}
+              onPress={() => action.route && router.push(action.route as never)}
+              style={[styles.quickAction, { borderColor: tokens.borderSoft, backgroundColor: tokens.bg }]}>
+              <View style={[styles.quickIcon, { backgroundColor: softTint(action.tint) }]}>
+                <Ionicons name={action.icon} size={18} color={action.tint} />
+              </View>
+              <Text style={[styles.quickLabel, { color: tokens.text }]}>{action.label}</Text>
+              {action.ai ? <View style={styles.quickSparkle}><AISparkle size={12} /></View> : null}
+            </Pressable>
+          ))}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+function Stat({ label, value, color }: { label: string; value: string; color: string }) {
+  const { tokens } = useBico();
+
+  return (
+    <View style={styles.stat}>
+      <Text style={[styles.statValue, { color }]}>{value}</Text>
+      <Text style={[styles.statLabel, { color: tokens.textMuted }]}>{label}</Text>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  safeArea: {
+    flex: 1,
+  },
+  notificationIcon: {
+    padding: 9,
+  },
+  notificationDot: {
+    position: 'absolute',
+    right: 8,
+    top: 8,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    borderWidth: 1.5,
+  },
+  content: {
+    paddingHorizontal: 16,
+    paddingTop: 4,
+    paddingBottom: 18,
+    gap: 16,
+  },
+  todayHeader: {
+    padding: 16,
+    paddingBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  },
+  eyebrow: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  todayTitle: {
+    marginTop: 2,
+    fontSize: 22,
+    fontWeight: '700',
+  },
+  forecast: {
+    alignItems: 'flex-end',
+  },
+  forecastLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  forecastValue: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  cardDivider: {
+    height: StyleSheet.hairlineWidth,
+    marginHorizontal: 16,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    padding: 16,
+    paddingTop: 12,
+  },
+  stat: {
+    flex: 1,
+  },
+  statValue: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  statLabel: {
+    marginTop: 1,
+    fontSize: 12,
+  },
+  sectionHeader: {
+    marginHorizontal: 4,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  linkText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  appointmentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    gap: 12,
+  },
+  timeBox: {
+    width: 56,
+    borderRadius: 10,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  timeText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  durationText: {
+    fontSize: 10,
+  },
+  appointmentBody: {
+    flex: 1,
+    gap: 3,
+  },
+  appointmentTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  inlineRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  appointmentLocation: {
+    fontSize: 13,
+  },
+  aiCard: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 14,
+    padding: 16,
+    gap: 10,
+  },
+  aiLabel: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  aiText: {
+    fontSize: 15,
+    lineHeight: 22,
+    fontWeight: '500',
+  },
+  aiActions: {
+    flexDirection: 'row',
     gap: 8,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  quickGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
+  quickAction: {
+    width: '48.5%',
+    minHeight: 96,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 14,
+    padding: 14,
+    gap: 8,
+  },
+  quickIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  quickLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  quickSparkle: {
     position: 'absolute',
+    top: 10,
+    right: 10,
   },
 });
