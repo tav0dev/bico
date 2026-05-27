@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AISparkle, BicoAvatar, IconButton } from '@/components/bico/ui';
 import { useBico } from '@/context/bico-context';
 
-const messages = [
+const initialMessages = [
   { from: 'them', text: 'Oi Marina! Vi seu trabalho no Instagram', time: '14:20' },
   { from: 'them', text: 'Voce atende perto da Vila Madalena? Quanto custa um pacote mensal?', time: '14:20' },
   { from: 'me', text: 'Oi Carla! Atendo sim. Tenho dois pacotes:\n\n8 sessoes/mes - R$ 750\n12 sessoes/mes - R$ 1.080', time: '14:25' },
@@ -15,7 +15,7 @@ const messages = [
   { from: 'them', text: 'Posso remarcar pra quinta as 16h?', time: '14:32' },
 ];
 
-const suggestions = [
+const initialSuggestions = [
   'Posso sim! Quinta as 16h esta confirmado.',
   'Quinta tenho 16h ou 18h. Qual prefere?',
   'Hoje nao consigo as 16h. E as 17h30?',
@@ -24,10 +24,45 @@ const suggestions = [
 export default function InboxThreadScreen() {
   const router = useRouter();
   const { tokens } = useBico();
+  const [chatMessages, setChatMessages] = useState(initialMessages);
+  const [inputText, setInputText] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(true);
+  const [suggestions, setSuggestions] = useState(initialSuggestions);
+
+  function handleSend(text: string) {
+    if (!text.trim()) return;
+
+    const now = new Date();
+    const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+    // Add user message
+    setChatMessages((prev) => [...prev, { from: 'me', text, time: timeStr }]);
+    setInputText('');
+
+    // Hide suggestions or update them after sending
+    setShowSuggestions(false);
+
+    // Simulate a reply after 1.5 seconds
+    setTimeout(() => {
+      const replyTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          from: 'them',
+          text: 'Perfeito! Obrigado pelo retorno rápido Marina. Nos vemos lá!',
+          time: replyTime,
+        },
+      ]);
+    }, 1500);
+  }
+
+  function handleSuggestionPress(suggestion: string) {
+    handleSend(suggestion);
+  }
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: tokens.bg }]}>
+      {/* Header */}
       <View style={[styles.header, { borderBottomColor: tokens.borderSoft }]}>
         <IconButton name="chevron-back" onPress={() => router.back()} />
         <BicoAvatar name="Carla Mendes" size={36} />
@@ -41,6 +76,7 @@ export default function InboxThreadScreen() {
         <IconButton name="ellipsis-vertical" />
       </View>
 
+      {/* Context strip showing client info */}
       <View style={[styles.contextStrip, { backgroundColor: tokens.purpleSoft, borderBottomColor: tokens.borderSoft }]}>
         <AISparkle size={13} />
         <Text style={[styles.contextText, { color: tokens.text }]}>
@@ -49,10 +85,15 @@ export default function InboxThreadScreen() {
         </Text>
       </View>
 
+      {/* Message List */}
       <FlatList
-        data={messages}
+        data={chatMessages}
         keyExtractor={(item, index) => `${item.time}-${index}`}
         contentContainerStyle={styles.messageList}
+        ref={(ref) => {
+          // Scroll to end automatically when messages load or change
+          setTimeout(() => ref?.scrollToEnd({ animated: true }), 100);
+        }}
         renderItem={({ item }) => {
           const isMe = item.from === 'me';
           return (
@@ -74,6 +115,7 @@ export default function InboxThreadScreen() {
         }}
       />
 
+      {/* Tuco Smart suggestions */}
       {showSuggestions ? (
         <View style={[styles.suggestions, { backgroundColor: tokens.bgSoft, borderTopColor: tokens.borderSoft }]}>
           <View style={styles.suggestionsHeader}>
@@ -84,21 +126,43 @@ export default function InboxThreadScreen() {
             </Pressable>
           </View>
           {suggestions.map((suggestion) => (
-            <View key={suggestion} style={[styles.suggestionItem, { backgroundColor: tokens.bg, borderColor: tokens.border }]}>
+            <Pressable
+              key={suggestion}
+              onPress={() => handleSuggestionPress(suggestion)}
+              style={({ pressed }) => [
+                styles.suggestionItem,
+                {
+                  backgroundColor: tokens.bg,
+                  borderColor: tokens.border,
+                  opacity: pressed ? 0.72 : 1,
+                },
+              ]}>
               <Text style={[styles.suggestionText, { color: tokens.text }]}>{suggestion}</Text>
-            </View>
+            </Pressable>
           ))}
         </View>
       ) : null}
 
+      {/* Chat Input Bar */}
       <View style={[styles.inputRow, { backgroundColor: tokens.bg, borderTopColor: tokens.borderSoft }]}>
         <Ionicons name="attach-outline" size={21} color={tokens.textMuted} />
         <TextInput
           placeholder="Mensagem..."
           placeholderTextColor={tokens.textMuted}
+          value={inputText}
+          onChangeText={setInputText}
+          onSubmitEditing={() => handleSend(inputText)}
           style={[styles.input, { backgroundColor: tokens.bgSoft, color: tokens.text }]}
         />
-        <Pressable style={[styles.sendButton, { backgroundColor: tokens.green }]}>
+        <Pressable
+          onPress={() => handleSend(inputText)}
+          style={({ pressed }) => [
+            styles.sendButton,
+            {
+              backgroundColor: tokens.green,
+              opacity: pressed ? 0.8 : 1,
+            },
+          ]}>
           <Ionicons name="send" size={18} color="#FFFFFF" />
         </Pressable>
       </View>
@@ -159,9 +223,10 @@ const styles = StyleSheet.create({
   },
   messageList: {
     padding: 12,
+    paddingBottom: 24,
   },
   bubbleWrap: {
-    marginBottom: 6,
+    marginBottom: 8,
   },
   bubble: {
     maxWidth: '78%',
@@ -190,6 +255,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    marginBottom: 4,
   },
   suggestionTitle: {
     flex: 1,
