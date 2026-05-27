@@ -34,7 +34,17 @@ export default function OnboardingScreen() {
   const [phone, setPhone] = useState('(11) 98765-4321');
 
   // Step 1 states (Profession)
-  const [selectedProfession, setSelectedProfession] = useState('Personal trainer');
+  const [selectedProfessions, setSelectedProfessions] = useState<string[]>(['Personal trainer']);
+
+  function handleToggleProfession(profession: string) {
+    setSelectedProfessions((current) => {
+      if (current.includes(profession)) {
+        return current.filter((p) => p !== profession);
+      } else {
+        return [...current, profession];
+      }
+    });
+  }
 
   // Step 3 states (Calendar sync loader)
   const [syncing, setSyncing] = useState(false);
@@ -150,11 +160,11 @@ export default function OnboardingScreen() {
 
             <View style={styles.chipWrap}>
               {professions.map((profession) => {
-                const active = profession === selectedProfession;
+                const active = selectedProfessions.includes(profession);
                 return (
                   <Pressable
                     key={profession}
-                    onPress={() => setSelectedProfession(profession)}
+                    onPress={() => handleToggleProfession(profession)}
                     style={[
                       styles.professionChip,
                       {
